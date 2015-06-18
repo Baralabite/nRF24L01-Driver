@@ -18,74 +18,80 @@ CON
 
 OBJ
 
-  Serial: "FullDuplexSerial"
   SPI: "SPI_Spin"
   
 PUB Main | counter, c
 
+  waitcnt(clkfreq*2+cnt)
+
   {Set INPUTs/OUTPUTs}
-  DIRA[CE..MOSI]~~               
+  DIRA[CE..MOSI]~~
+  DIRA[5]~
   DIRA[MISO..IRQ]~
 
   {Set starting pin states}
   OUTA[CSN]~~
   OUTA[CE]~
-
-  SPI.start(100, 0)
-  Serial.start(31, 30, 0, 115200)
-  waitcnt(clkfreq*2+cnt)
-  Serial.str(String(16, "Start Reciving...", 13))
-
-  waitcnt(clkfreq/2+cnt)
-  
-  wait(1)
-
-  write_register(%0010_0000, %0111_1010)      'All IRQ masks on, 1 bit CRC, CRC enabled, PWR on, TX mode activated.
-
-  wait(2)
-
-
-  DIRA[CE]~~
-  OUTA[CE]~~
   DIRA[20..23]~~
-  wait(2)
-                          
+
+  SPI.start(10, 0)
+
+  write_register(%0010_0100, %0001_1010)
+  wait(1)
+  write_register(%0010_0000, $0e)
+
+  wait(1)
+  write_byte($01)
+  wait(1)
+  write_byte($02)
+  wait(1)
+  write_byte($03)
+  wait(1)
+  write_byte($04)
+
   repeat
+                          
+  {repeat
     counter++
 
-    write_register($1010_0000, counter)
-
-    c := read_register($0010_0000)
-    if c == %01111010
-      OUTA[20]~~
-    else
-      OUTA[20]~
-      
-
-    Serial.bin(c, 8)
-    Serial.tx(13)
+    write_register(%1010_0000, counter)
+    wait(1)
 
     if counter > 254
       counter := 0
 
+    if INA[5] == 0
+      write_register(%0010_0111, %0010_1110)
+      wait(1)
+
     !OUTA[23]
 
-    waitcnt(clkfreq/10+cnt)     
+    waitcnt(clkfreq/100+cnt)}
   
   
   
-  
+PUB write_byte(data)
+
+  write_register($A0, data)
+  OUTA[CE]~~
+  waitcnt(1443+cnt) '30us
+  OUTA[CE]~
 
 PUB write_register(reg, data)
 
   OUTA[CSN]~                    'Transition CSN to low for start of command (section 8.3.1 of manual)  
   wait(1)                       'Wait 1ms for good measure
-
   SPI.SHIFTOUT(MOSI, SCK, SPI_SHIFTOUT_MODE, SPI_SHIFTOUT_BITS, reg)
-  'wait(1)
   SPI.SHIFTOUT(MOSI, SCK, SPI_SHIFTOUT_MODE, SPI_SHIFTOUT_BITS, data)
+  wait(1)
+  OUTA[CSN]~~
 
-  wait(2)
+PUB write(data)
+
+  OUTA[CSN]~
+  wait(1)
+  SPI.SHIFTOUT(MOSI, SCK, SPI_SHIFTOUT_MODE, SPI_SHIFTOUT_BITS, data)
+  wait(1)
   OUTA[CSN]~~
 
 PUB read_register(reg) | data

@@ -18,7 +18,6 @@ CON
 
 OBJ
 
-  Serial: "FullDuplexSerial"
   SPI: "SPI_Spin"
   
 PUB Main | counter
@@ -31,14 +30,14 @@ PUB Main | counter
   OUTA[CSN]~~
   OUTA[CE]~
 
-  SPI.start(100, 0)
-  Serial.start(31, 30, 0, 115200)
+  SPI.start(10, 0)
   waitcnt(clkfreq*2+cnt)
-  Serial.str(String(16, "Start Reciving...", 13))
   
   wait(1)
 
-  write_register(%0010_0000, %0111_1011)      'All IRQ masks on, 1 bit CRC, CRC enabled, PWR on, TX mode activated.
+  write_register(%0011_0001, $01)
+  wait(1)
+  write_register(%0010_0000, $0f)      'All IRQ masks on, 1 bit CRC, CRC enabled, PWR on, TX mode activated.
 
   wait(2)
 
@@ -49,9 +48,6 @@ PUB Main | counter
                           
   repeat
     counter := read_register(%0110_0001)
-
-    Serial.bin(counter, 8)
-    Serial.tx(13)
 
     waitcnt(clkfreq/10+cnt)     
   
