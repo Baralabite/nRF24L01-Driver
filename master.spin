@@ -36,7 +36,7 @@ PUB Main | counter, c
 
   SPI.start(10, 0)
 
-  write_register(%0010_0100, %0001_1010)
+  'write_register(%0010_0100, %0001_1010)
   wait(1)
   write_register(%0010_0000, $0e)
 

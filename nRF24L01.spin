@@ -100,23 +100,22 @@ for.
   DIRA[CE..MOSI]~~
   DIRA[MISO..IRQ]~
 
-  DIRA[23]~~
-  OUTA[23]~~
+  DIRA[23]~~                    'LED status indicating initialization of code. Only applicable for
+  OUTA[23]~~                    'Demo board.
 
   {Set starting pin states}
   OUTA[CSN] := 1                'Default Chip Select state is 1
   OUTA[CE] := 0                 'Default Chip Enable state is 0
 
-  SPI.start(10, 0)
+  SPI.start(8, 0)
 
-  writeRegister(REG_CONFIG, EN_CRC|PWR_UP)
-  writeRegister(REG_EN_AA, $00)
+  writeRegister(REG_CONFIG, EN_CRC|CRCO)
 
 PUB txByte(data)
 
   writeCommand(W_TX_PAYLOAD, data)
   OUTA[CE]~~
-  waitUS(25)
+  waitUS(30)
   OUTA[CE]~
 
 PUB setPowered(power)
@@ -127,15 +126,18 @@ A little speed is lost when turning off as it gets the current
 register setting (which takes time), and ANDs it with the
 new power mask.
 }
-
   if power
-    writeRegister(REG_CONFIG, PWR_UP)
+    writeRegister(REG_CONFIG, readRegister(REG_CONFIG) | %10)
   else
-    writeRegister(REG_CONFIG, readRegister(REG_CONFIG) & %0000_0010)
+    writeRegister(REG_CONFIG, readRegister(REG_CONFIG) & %10)
 
 PUB setReceiver
 
   writeRegister(REG_CONFIG, readRegister(REG_CONFIG) | PRIM_RX)
+
+PUB setTransmitter
+
+  'do nothing. Don't needa flip no bits or nothing.
 
 PUB flushTX
 
