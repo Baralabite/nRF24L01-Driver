@@ -1,7 +1,7 @@
 CON
 
-  _clkmode = XTAL1 + PLL16X
-  _xinfreq = 5_000_000
+  _clkmode = XTAL1 + PLL8X
+  _xinfreq = 10_000_000
 
 OBJ
 
@@ -9,22 +9,17 @@ OBJ
 
 PUB Main | c
 
-  waitcnt(clkfreq*2+cnt)        'Wait for 100ms to allow for Receiver to start up.
+  waitcnt(clkfreq*3+cnt)        'Wait for 100ms to allow for Receiver to start up.
 
-  nRF.init(0, 1, 2, 3, 4, 5)
+  nRF.init(3, 4, 6, 7, 8, 9)
 
   nRF.setTransmitter
   nRF.setPowered(true)
 
-  nRF.txByte(1)
-  nRF.txByte(2)
-  nRF.txByte(4)
-  nRF.txByte(5)
-  nRF.txByte(6)
-
   repeat
+    if INA[9] == 0
+      nRF.writeRegister(nRF#REG_STATUS, %0010_0000)
 
-  {repeat
     c++
 
     nRF.txByte(c)
@@ -32,5 +27,5 @@ PUB Main | c
     if c > 254
       c := 0
 
-    waitcnt(clkfreq/10+cnt)}
+    waitcnt(clkfreq/5+cnt)
 

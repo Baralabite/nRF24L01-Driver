@@ -71,9 +71,14 @@ CON
   SPI_SHIFTIN_MODE = 0
   SPI_SHIFTIN_BITS = 8
 
+  MODE_TX = 0
+  MODE_RX = 1
+
 VAR
 
   byte CE, CSN, SCK, MOSI, MISO, IRQ
+
+  byte mode '0=tx, 1=rx
 
 OBJ
 
@@ -131,13 +136,21 @@ new power mask.
   else
     writeRegister(REG_CONFIG, readRegister(REG_CONFIG) & %10)
 
+  if mode == MODE_RX
+    OUTA[CE] := 1
+
 PUB setReceiver
 
   writeRegister(REG_CONFIG, readRegister(REG_CONFIG) | PRIM_RX)
+  writeRegister(REG_EN_AA, 0) 'Disable all of the auto acknowledgements!
+  mode := MODE_RX
 
 PUB setTransmitter
 
   'do nothing. Don't needa flip no bits or nothing.
+  writeRegister(REG_EN_AA, 0) 'Disable all of the auto acknowledgements!
+  writeRegister(REG_SETUP_RETR, 0) 'Disable all of the auto retransmits!
+  mode := MODE_TX
 
 PUB flushTX
 
